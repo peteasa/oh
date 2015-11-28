@@ -1,10 +1,11 @@
 module etx_core(/*AUTOARG*/
    // Outputs
-   tx_access, tx_burst, tx_packet, txrd_wait, txrr_wait, txwr_wait,
+   tx_data_slow, tx_frame_slow, txrd_wait, txrr_wait, txwr_wait,
    etx_cfg_access, etx_cfg_packet,
    // Inputs
    nreset, clk, tx_rd_wait, tx_wr_wait, txrd_access, txrd_packet,
-   txrr_access, txrr_packet, txwr_access, txwr_packet, etx_cfg_wait
+   txrd_full, txrr_access, txrr_packet, txrr_full, txwr_access,
+   txwr_packet, txwr_full, etx_cfg_wait
    );
    parameter AW      = 32;
    parameter DW      = 32;
@@ -17,9 +18,8 @@ module etx_core(/*AUTOARG*/
    input 	   clk;   
   
    //IO interface
-   output 	   tx_access;
-   output 	   tx_burst;
-   output [PW-1:0] tx_packet; 
+   output [63:0]   tx_data_slow;
+   output [3:0]    tx_frame_slow;     
    input 	   tx_rd_wait;
    input 	   tx_wr_wait;
    
@@ -27,17 +27,22 @@ module etx_core(/*AUTOARG*/
    input 	   txrd_access;
    input [PW-1:0]  txrd_packet;
    output 	   txrd_wait;
+   input 	   txrd_full;//sysclk domain
+   
    
    //TXRR
    input 	   txrr_access;
    input [PW-1:0]  txrr_packet;
    output 	   txrr_wait;
+   input 	   txrr_full;//sysclk domain
+   
    
    //TXWR
    input 	   txwr_access;
    input [PW-1:0]  txwr_packet;
    output 	   txwr_wait;
-
+   input 	   txwr_full; //sysclk domain
+   
    //Configuration Interface (for ERX)
    output 	   etx_cfg_access;
    output [PW-1:0] etx_cfg_packet;
@@ -45,13 +50,14 @@ module etx_core(/*AUTOARG*/
 
    //for status?
    wire[15:0] 	   tx_status; 
-   
-   /*AUTOOUTPUT*/
+     
+   // End of automatics
    /*AUTOINPUT*/
      
    
    /*AUTOWIRE*/
    // Beginning of automatic wires (for undeclared instantiated-module outputs)
+   wire			burst_enable;		// From etx_cfg of etx_cfg.v
    wire [3:0]		ctrlmode;		// From etx_cfg of etx_cfg.v
    wire			ctrlmode_bypass;	// From etx_cfg of etx_cfg.v
    wire			emmu_access;		// From etx_mmu of emmu.v
@@ -74,6 +80,8 @@ module etx_core(/*AUTOARG*/
    wire			mi_we;			// From etx_cfgif of ecfg_if.v
    wire			mmu_enable;		// From etx_cfg of etx_cfg.v
    wire			remap_enable;		// From etx_cfg of etx_cfg.v
+   wire			tx_access;		// From etx_protocol of etx_protocol.v
+   wire			tx_burst;		// From etx_protocol of etx_protocol.v
    wire			tx_enable;		// From etx_cfg of etx_cfg.v
    // End of automatics
         
@@ -91,8 +99,8 @@ module etx_core(/*AUTOARG*/
 			    .txrd_wait		(txrd_wait),
 			    .txrr_wait		(txrr_wait),
 			    .etx_access		(etx_access),
-			    .etx_packet		(etx_packet[PW-1:0]),
 			    .etx_rr		(etx_rr),
+			    .etx_packet		(etx_packet[PW-1:0]),
 			    // Inputs
 			    .clk		(clk),
 			    .nreset		(nreset),
@@ -121,7 +129,8 @@ module etx_core(/*AUTOARG*/
                           );
    */
 
-   etx_remap etx_remap (/*AUTOINST*/
+   etx_remap etx_remap (
+			/*AUTOINST*/
 			// Outputs
 			.emesh_access_out(etx_remap_access),	 // Templated
 			.emesh_packet_out(etx_remap_packet[PW-1:0]), // Templated
@@ -154,6 +163,8 @@ module etx_core(/*AUTOARG*/
                           .mi_en	    (mi_mmu_en),
                          );
    */
+
+   //TODO: Remove etx_rr, not needed?
 
    emmu etx_mmu (
 	      /*AUTOINST*/
@@ -194,15 +205,17 @@ module etx_core(/*AUTOARG*/
 			      // Outputs
 			      .etx_rd_wait	(etx_rd_wait),	 // Templated
 			      .etx_wr_wait	(etx_wr_wait),	 // Templated
-			      .tx_packet	(tx_packet[PW-1:0]),
-			      .tx_access	(tx_access),
 			      .tx_burst		(tx_burst),
+			      .tx_access	(tx_access),
+			      .tx_data_slow	(tx_data_slow[63:0]),
+			      .tx_frame_slow	(tx_frame_slow[3:0]),
 			      // Inputs
 			      .nreset		(nreset),
 			      .clk		(clk),
 			      .etx_access	(emmu_access),	 // Templated
 			      .etx_packet	(emmu_packet[PW-1:0]), // Templated
 			      .tx_enable	(tx_enable),
+			      .burst_enable	(burst_enable),
 			      .gpio_data	(gpio_data[8:0]),
 			      .gpio_enable	(gpio_enable),
 			      .tx_rd_wait	(tx_rd_wait),
@@ -252,28 +265,38 @@ module etx_core(/*AUTOARG*/
     );
         */
 
-   //todo: make more useufl
-   assign tx_status[15:0]  = 16'b0;
-/*   
+   //synchronizing signals from sys_clk fifo
+   dsync #(.DW(3))     
+     dsync (// Outputs
+		.dout			({txrr_full_sync,
+					 txrd_full_sync,
+					 txwr_full_sync}),
+	    // Inputs
+	    .clk			(clk),
+	    .din			({txrr_full,
+					  txrd_full,
+					  txwr_full})
+	    );
+   
+   
 
-{2'b0,                //15:14
-			      etx_rd_wait,         //13
-			      etx_wr_wait,         //12
-			      txrr_fifo_read,      //11			
-			      txrr_wait,           //10
-			      txrr_access,         //9	 		
-			      txrd_fifo_read,      //8			
-			      txrd_wait,           //7
-			      txrd_access,         //6
-			      txwr_fifo_read,      //5
-			      txwr_wait,           //4
-			      txwr_access,         //3
-			      1'b0,                //2
-			      1'b0,                //1
-			      1'b0	           //0
-			      };
-*/
+   assign tx_status[15:0] = {5'b0,
+                             tx_burst,     
+			     tx_rd_wait,
+			     tx_wr_wait,
+			     etx_rd_wait,
+                             etx_wr_wait,
+			     txrr_wait,
+			     txrd_wait,
+			     txwr_wait,
+			     txrr_full_sync,
+			     txrd_full_sync,
+			     txwr_full_sync
+			     };
+   
  
+   //configer register file
+   defparam etx_cfg.ID = ID;   
    etx_cfg etx_cfg (
 		    /*AUTOINST*/
 		    // Outputs
@@ -282,6 +305,7 @@ module etx_core(/*AUTOARG*/
 		    .mmu_enable		(mmu_enable),
 		    .gpio_enable	(gpio_enable),
 		    .remap_enable	(remap_enable),
+		    .burst_enable	(burst_enable),
 		    .gpio_data		(gpio_data[8:0]),
 		    .ctrlmode		(ctrlmode[3:0]),
 		    .ctrlmode_bypass	(ctrlmode_bypass),
@@ -292,9 +316,11 @@ module etx_core(/*AUTOARG*/
 		    .mi_we		(mi_we),
 		    .mi_addr		(mi_addr[RFAW+1:0]),
 		    .mi_din		(mi_din[31:0]),
-		    .tx_status		(tx_status[15:0]));
+		    .tx_status		(tx_status[15:0]),
+		    .etx_access		(etx_access),
+		    .etx_packet		(etx_packet[PW-1:0]));
 
 endmodule // elink
 // Local Variables:
-// verilog-library-directories:("." "../../emmu/hdl" "../../memory/hdl")
+// verilog-library-directories:("." "../../emmu/hdl" "../../memory/hdl" "../../common/hdl")
 // End:

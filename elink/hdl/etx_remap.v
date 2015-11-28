@@ -9,7 +9,6 @@ module etx_remap (/*AUTOARG*/
    parameter AW = 32;
    parameter DW = 32;
    parameter PW = 104;
-   parameter ID = 12'h808;
    
    //Clock
    input          clk;
@@ -52,6 +51,7 @@ module etx_remap (/*AUTOARG*/
 			     addr_in[15:0]
 			     };
    			     
+
    assign addr_out[31:0] = (remap_en & ~remap_bypass) ? addr_remap[31:0] :
                 	                                addr_in[31:0];
         		
