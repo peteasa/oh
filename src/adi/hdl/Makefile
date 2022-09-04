@@ -1,6 +1,7 @@
 ####################################################################################
 ####################################################################################
-## Copyright 2011(c) Analog Devices, Inc.
+## Copyright (c) 2018 - 2021 Analog Devices, Inc.
+### SPDX short identifier: BSD-1-Clause
 ## Auto-generated, do not modify!
 ####################################################################################
 ####################################################################################
@@ -25,7 +26,7 @@ SUBPROJECTS := $(foreach projname,$(PROJECTS), \
 	$(foreach archname,$(notdir $(subst /Makefile,,$(wildcard projects/$(projname)/*/Makefile))), \
 		$(projname).$(archname)))
 
-.PHONY: lib all clean clean-all $(SUBPROJECTS)
+.PHONY: lib all clean clean-ipcache clean-all $(SUBPROJECTS)
 
 $(SUBPROJECTS):
 	$(MAKE) -C projects/$(subst .,/,$@)
@@ -41,8 +42,12 @@ all:
 clean:
 	$(MAKE) -C projects/ clean
 
+clean-ipcache:
+	$(call clean, \
+		ipcache, \
+		$(HL)IP Cache$(NC))
 
-clean-all:clean
+clean-all:clean clean-ipcache
 	$(MAKE) -C projects/ clean
 	$(MAKE) -C library/ clean
 

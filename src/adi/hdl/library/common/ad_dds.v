@@ -70,6 +70,8 @@ module ad_dds #(
 
   wire [DDS_DW*CLK_RATIO-1:0] dac_dds_data_s;
 
+  reg                         dac_data_sync_m = 1'd0;
+
   always @(posedge clk) begin
     dac_dds_data <= dac_dds_data_s;
   end
@@ -85,18 +87,43 @@ module ad_dds #(
 
       reg  [PHASE_DW-1:0]  dac_dds_phase_0[1:CLK_RATIO];
       reg  [PHASE_DW-1:0]  dac_dds_phase_1[1:CLK_RATIO];
+      reg  [PHASE_DW-1:0]  dac_dds_phase_0_m[1:CLK_RATIO];
+      reg  [PHASE_DW-1:0]  dac_dds_phase_1_m[1:CLK_RATIO];
       reg  [PHASE_DW-1:0]  dac_dds_incr_0 = 'd0;
       reg  [PHASE_DW-1:0]  dac_dds_incr_1 = 'd0;
+      reg  [CLK_RATIO :1]  sync_min_pulse_m = 'd0;
+
+      // For scenarios where the synchronization signal comes from an external
+      // source and it is high for a longer period of time, the phase
+      // accumulator stages must be reset, in order to avoid a noise like
+      // signal caused by sending all the summed outputs of each DDS stage.
+      // There is a minimum synchronization pulse width of n clock cycles,
+      // that is required to synchronize all phase accumulator stages.
+      // Where n is equal to the CLK_RATIO.
+      always @(posedge clk) begin
+        dac_data_sync_m <= dac_data_sync;
+        sync_min_pulse_m[1] <= dac_data_sync_m & !dac_data_sync |
+                               sync_min_pulse_m[1] & !sync_min_pulse_m[CLK_RATIO];
+      end
+
+      for (i=1; i < CLK_RATIO; i=i+1) begin: sync_delay
+        always @(posedge clk) begin
+          sync_min_pulse_m[i+1] <= sync_min_pulse_m[i];
+        end
+      end
 
       always @(posedge clk) begin
         dac_dds_incr_0 <= tone_1_freq_word * CLK_RATIO;
         dac_dds_incr_1 <= tone_2_freq_word * CLK_RATIO;
       end
 
-      //  phase accumulator
+      // phase accumulator
       for (i=1; i <= CLK_RATIO; i=i+1) begin: dds_phase
         always @(posedge clk) begin
           if (dac_data_sync == 1'b1) begin
+            dac_dds_phase_0[i] <= 'd0;
+            dac_dds_phase_1[i] <= 'd0;
+          end else if (sync_min_pulse_m[1] == 1'b1) begin
             if (i == 1) begin
               dac_dds_phase_0[1] <= tone_1_init_offset;
               dac_dds_phase_1[1] <= tone_2_init_offset;
@@ -107,6 +134,14 @@ module ad_dds #(
           end else if (dac_valid == 1'b1) begin
             dac_dds_phase_0[i] <= dac_dds_phase_0[i] + dac_dds_incr_0;
             dac_dds_phase_1[i] <= dac_dds_phase_1[i] + dac_dds_incr_1;
+          end
+
+          if (dac_data_sync == 1'b1 || sync_min_pulse_m[1]) begin
+            dac_dds_phase_0_m[i] <= 'd0;
+            dac_dds_phase_1_m[i] <= 'd0;
+          end else begin
+            dac_dds_phase_0_m[i] <= dac_dds_phase_0[i];
+            dac_dds_phase_1_m[i] <= dac_dds_phase_1[i];
           end
         end
 
@@ -120,9 +155,9 @@ module ad_dds #(
          i_dds_2 (
           .clk (clk),
           .dds_format (dac_dds_format),
-          .dds_phase_0 (dac_dds_phase_0[i]),
+          .dds_phase_0 (dac_dds_phase_0_m[i]),
           .dds_scale_0 (tone_1_scale),
-          .dds_phase_1 (dac_dds_phase_1[i]),
+          .dds_phase_1 (dac_dds_phase_1_m[i]),
           .dds_scale_1 (tone_2_scale),
           .dds_data (dac_dds_data_s[(DDS_DW*i)-1:DDS_DW*(i-1)]));
       end

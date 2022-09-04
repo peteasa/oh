@@ -252,18 +252,23 @@ always @(posedge clk) begin
   end
 end
 
-always @(posedge clk)
-begin
-  if (response_valid == 1'b1 & response_ready == 1'b1) begin
+always @(posedge clk) begin
+  if (ctrl_enable == 1'b0) begin
+    up_measured_transfer_length <= 'h0;
+  end else if (response_valid == 1'b1 && response_ready == 1'b1) begin
     up_measured_transfer_length <= up_measured_transfer_length + response_measured_burst_length + 1'b1;
-    up_transfer_id_eot_d <= up_transfer_id_eot;
   end else if (up_clear_tl == 1'b1) begin
     up_measured_transfer_length <= 'h0;
   end
 end
 
-always @(posedge clk)
-begin
+always @(posedge clk) begin
+  if (response_valid == 1'b1 && response_ready == 1'b1) begin
+    up_transfer_id_eot_d <= up_transfer_id_eot;
+  end
+end
+
+always @(posedge clk) begin
   if (ctrl_enable == 1'b0) begin
     response_ready <= 1'b1;
   end else if (response_ready == 1'b1) begin
@@ -277,7 +282,7 @@ always @(posedge clk)
 begin
   if (response_valid == 1'b1 && response_ready == 1'b1) begin
     up_tlf_s_valid <= up_bl_partial;
-    up_clear_tl <= up_eot;
+    up_clear_tl <= response_eot;
   end else if (up_tlf_s_ready == 1'b1) begin
     up_tlf_s_valid <= 1'b0;
   end
@@ -293,16 +298,17 @@ util_axis_fifo #(
   .s_axis_aresetn(ctrl_enable),
   .s_axis_valid(up_tlf_s_valid),
   .s_axis_ready(up_tlf_s_ready),
-  .s_axis_empty(),
+  .s_axis_full(),
   .s_axis_data({up_transfer_id_eot_d, up_measured_transfer_length}),
   .s_axis_room(),
-
+  
   .m_axis_aclk(clk),
   .m_axis_aresetn(ctrl_enable),
   .m_axis_valid(up_tlf_valid),
   .m_axis_ready(up_tlf_rd & up_tlf_valid),
   .m_axis_data(up_tlf_data),
-  .m_axis_level()
-);
+  .m_axis_level(),
+  .m_axis_empty ()
+  );
 
 endmodule

@@ -41,6 +41,8 @@ module axi_dmac_regmap #(
   parameter BYTES_PER_BEAT_WIDTH_DEST = 1,
   parameter BYTES_PER_BEAT_WIDTH_SRC = 1,
   parameter BYTES_PER_BURST_WIDTH = 7,
+  parameter DMA_TYPE_DEST = 0,
+  parameter DMA_TYPE_SRC = 2,
   parameter DMA_AXI_ADDR_WIDTH = 32,
   parameter DMA_LENGTH_WIDTH = 24,
   parameter DMA_LENGTH_ALIGN = 3,
@@ -48,7 +50,8 @@ module axi_dmac_regmap #(
   parameter HAS_DEST_ADDR = 1,
   parameter HAS_SRC_ADDR = 1,
   parameter DMA_2D_TRANSFER = 0,
-  parameter SYNC_TRANSFER_START = 0
+  parameter SYNC_TRANSFER_START = 0,
+  parameter CACHE_COHERENT_DEST = 0
 ) (
   // Slave AXI interface
   input s_axi_aclk,
@@ -56,7 +59,7 @@ module axi_dmac_regmap #(
 
   input s_axi_awvalid,
   output s_axi_awready,
-  input [11:0] s_axi_awaddr,
+  input [10:0] s_axi_awaddr,
   input [2:0] s_axi_awprot,
 
   input s_axi_wvalid,
@@ -70,7 +73,7 @@ module axi_dmac_regmap #(
 
   input s_axi_arvalid,
   output s_axi_arready,
-  input [11:0] s_axi_araddr,
+  input [10:0] s_axi_araddr,
   input [2:0] s_axi_arprot,
 
   output s_axi_rvalid,
@@ -112,7 +115,7 @@ module axi_dmac_regmap #(
   input [31:0] dbg_ids1
 );
 
-localparam PCORE_VERSION = 'h00040261;
+localparam PCORE_VERSION = 'h00040461;
 
 // Register interface signals
 reg [31:0] up_rdata = 32'h00;
@@ -199,6 +202,11 @@ always @(posedge s_axi_aclk) begin
     9'h001: up_rdata <= ID;
     9'h002: up_rdata <= up_scratch;
     9'h003: up_rdata <= 32'h444d4143; // "DMAC"
+    9'h004: up_rdata <= {8'b0,
+                         4'b0,BYTES_PER_BURST_WIDTH[3:0],
+                         2'b0,DMA_TYPE_SRC[1:0],BYTES_PER_BEAT_WIDTH_SRC[3:0],
+                         2'b0,DMA_TYPE_DEST[1:0],BYTES_PER_BEAT_WIDTH_DEST[3:0]};
+    9'h005: up_rdata <= {31'd0, CACHE_COHERENT_DEST};
     9'h020: up_rdata <= up_irq_mask;
     9'h021: up_rdata <= up_irq_pending;
     9'h022: up_rdata <= up_irq_source;
@@ -261,8 +269,7 @@ axi_dmac_regmap_request #(
 );
 
 up_axi #(
-  .AXI_ADDRESS_WIDTH (12),
-  .ADDRESS_WIDTH (9)
+  .AXI_ADDRESS_WIDTH (11)
 ) i_up_axi (
   .up_rstn(s_axi_aresetn),
   .up_clk(s_axi_aclk),

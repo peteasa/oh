@@ -25,6 +25,13 @@ proc init {cellpath otherInfo} {
 		set_property "CONFIG.DMA_AXI_PROTOCOL_${dir}" $axi_protocol $ip
 		set_property "CONFIG.DMA_TYPE_${dir}" $old $ip
 	}
+
+  # Versions earlier than 2017.3 infer sub-optimal asymmetric memory
+  # See https://www.xilinx.com/support/answers/69179.html
+  regexp {^[0-9]+\.[0-9]+} [version -short] short_version
+  if {[expr $short_version > 2017.2]} {
+    set_property "CONFIG.ALLOW_ASYM_MEM" 1 $ip
+  }
 }
 
 proc post_config_ip {cellpath otherinfo} {

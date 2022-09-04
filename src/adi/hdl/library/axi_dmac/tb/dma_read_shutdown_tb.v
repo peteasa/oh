@@ -35,7 +35,7 @@
 
 `timescale 1ns/100ps
 
-module dmac_dma_read_shutdown_tb;
+module dma_read_shutdown_tb;
   parameter VCD_FILE = {`__FILE__,"cd"};
 
   `include "tb_base.v"
@@ -111,7 +111,8 @@ module dmac_dma_read_shutdown_tb;
     .DMA_TYPE_DEST(2),
     .DMA_DATA_WIDTH_SRC(32),
     .DMA_DATA_WIDTH_DEST(32),
-    .FIFO_SIZE(8)
+    .FIFO_SIZE(8),
+    .DMA_LENGTH_ALIGN(2)
   ) i_transfer (
     .m_src_axi_aclk (clk),
     .m_src_axi_aresetn(resetn),

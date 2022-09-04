@@ -35,7 +35,7 @@
 
 `timescale 1ns/100ps
 
-module dmac_dest_mm_axi #(
+module dest_axi_mm #(
 
   parameter ID_WIDTH = 3,
   parameter DMA_DATA_WIDTH = 64,
@@ -44,7 +44,8 @@ module dmac_dest_mm_axi #(
   parameter BEATS_PER_BURST_WIDTH = 4,
   parameter MAX_BYTES_PER_BURST = 128,
   parameter BYTES_PER_BURST_WIDTH = $clog2(MAX_BYTES_PER_BURST),
-  parameter AXI_LENGTH_WIDTH = 8)(
+  parameter AXI_LENGTH_WIDTH = 8,
+  parameter CACHE_COHERENT = 0)(
 
   input                               m_axi_aclk,
   input                               m_axi_aresetn,
@@ -77,6 +78,7 @@ module dmac_dest_mm_axi #(
   input                               fifo_valid,
   output                              fifo_ready,
   input [DMA_DATA_WIDTH-1:0]        fifo_data,
+  input [DMA_DATA_WIDTH/8-1:0]        fifo_strb,
   input                               fifo_last,
 
   input [BYTES_PER_BURST_WIDTH-1:0] dest_burst_info_length,
@@ -108,13 +110,14 @@ module dmac_dest_mm_axi #(
 
 wire address_enabled;
 
-dmac_address_generator #(
+address_generator #(
   .ID_WIDTH(ID_WIDTH),
   .BEATS_PER_BURST_WIDTH(BEATS_PER_BURST_WIDTH),
   .BYTES_PER_BEAT_WIDTH(BYTES_PER_BEAT_WIDTH),
   .DMA_DATA_WIDTH(DMA_DATA_WIDTH),
   .LENGTH_WIDTH(AXI_LENGTH_WIDTH),
-  .DMA_ADDR_WIDTH(DMA_ADDR_WIDTH)
+  .DMA_ADDR_WIDTH(DMA_ADDR_WIDTH),
+  .CACHE_COHERENT(CACHE_COHERENT)
 ) i_addr_gen (
   .clk(m_axi_aclk),
   .resetn(m_axi_aresetn),
@@ -149,10 +152,9 @@ assign m_axi_wvalid = fifo_valid;
 assign fifo_ready = m_axi_wready;
 assign m_axi_wlast = fifo_last;
 assign m_axi_wdata = fifo_data;
+assign m_axi_wstrb = fifo_strb;
 
-assign m_axi_wstrb = {(DMA_DATA_WIDTH/8){1'b1}};
-
-dmac_response_handler #(
+response_handler #(
   .ID_WIDTH(ID_WIDTH)
 ) i_response_handler (
   .clk(m_axi_aclk),

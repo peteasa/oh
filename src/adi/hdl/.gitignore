@@ -1,3 +1,6 @@
+ipcache
+*.ip_user_files
+*.dcp
 *.cache
 *.data
 *.xpr
@@ -75,5 +78,23 @@ reconfig_mif
 *.xml
 *.hw
 gui
-.timestamp_altera
+.timestamp_intel
+temporary_case_dependencies.mk
+*.zip
+*.str
+*.vcd
+*.wlf
+transcript
+tags
+boot_bin
+_info
+_vmake
+*.qdb
+*.qpg
+*.qtl
+*.xpe
+*.gen*
+*.xsa
+*.pdi
+library/*/bd/bd.tcl
 
