@@ -1,3 +1,5 @@
+include quiet.mk
+
 .PHONY: all clean
 
 all:

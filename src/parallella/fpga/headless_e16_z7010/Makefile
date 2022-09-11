@@ -1,3 +1,4 @@
+include ../quiet.mk
 
 M_DEPS := run.tcl
 M_DEPS += ../parallella_base/parallella_base.xpr
@@ -20,11 +21,13 @@ M_FLIST += system_wrapper.bit.bin
 
 .PHONY: all clean
 
-all: $(M_DEPS)
-	rm -f system_wrapper.bit.bin bit2bin.bin
-	$(M_VIVADO) run.tcl
-	bootgen -arch zynq -w on -image bit2bin.bif -split bin
+build_steps = \
+	$(M_VIVADO) run.tcl && \
+	bootgen -arch zynq -w on -image bit2bin.bif -split bin && \
 	cp -f system_wrapper.bit.bin parallella_e16_headless_gpiose_7010.bit.bin
 
+all: $(M_DEPS)
+	$(call build,($(build_steps)),build.log,headless_e16_z7010)
+
 clean:
-	rm -rf $(M_FLIST)
+	$(call clean,$(M_FLIST),headless_e16_z7010)

@@ -1,3 +1,4 @@
+include ../quiet.mk
 
 M_DEPS := run.tcl
 
@@ -22,7 +23,7 @@ M_FLIST += sim
 M_FLIST += src
 
 all: $(M_DEPS)
-	$(M_VIVADO) run.tcl
+	$(call build,$(M_VIVADO) run.tcl,build.log,parallella_base)
 
 clean:
-	rm -rf $(M_FLIST)
+	$(call clean,$(M_FLIST),parallella_base)
