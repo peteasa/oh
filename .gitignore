@@ -49,6 +49,13 @@ xgui/
 *.dcp
 *.veo
 *_ooc.*
+usage_statistics_webtalk.html
+xvlog.pb
+xsim.dir
+system.bit
+system.gen
+system.hdf
+system.hwdef
 
 #######################
 #ASIC proprietary files
@@ -56,3 +63,4 @@ proprietary/
 
 # parallella_base intermediate files
 src/parallella/fpga/parallella_base/src
+src/parallella/fpga/parallella_base/ip_tmp
