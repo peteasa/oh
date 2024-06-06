@@ -1,11 +1,14 @@
+> [!NOTE]
+> Active development of this clone of the OH project has moved. The code can be found [here](https://gitlab.com/paracpg/oh/-/tree/PYNQ-e-v1.0) and documentation [here](https://paracpg.gitlab.io).
+
 =======
 # OH! Open Hardware for Chip Designers
 
-## Introduction 
+## Introduction
 
 OH! is an open-source library of hardware building blocks based on silicon proven design practices at 0.35um to 28nm. The library is being used by Adapteva in designing its next generation ASIC.
 
-The library is written in standard Verilog (2005) and contains over 25,000 lines of Verilog code, over 150 separate modules. Examples of functionality include: FIFOs, SPI (master/slave), GPIO, high speed links, memories, clock circuits, synchronization primitives,interrupt controller, DMA.    
+The library is written in standard Verilog (2005) and contains over 25,000 lines of Verilog code, over 150 separate modules. Examples of functionality include: FIFOs, SPI (master/slave), GPIO, high speed links, memories, clock circuits, synchronization primitives,interrupt controller, DMA.
 
 
 ![alt tag](docs/lego.jpg)
@@ -121,7 +124,7 @@ TBD
 * Do not hard code numerical values in body of code
 * Keep parameter names short
 * Use common names: nreset, clk, din, dout, en, rd, wr, addr, etc
-* Make names descriptive, avoid non-common abbreviations 
+* Make names descriptive, avoid non-common abbreviations
 * Make names as short as possible, but not shorter
 * Use short named generate blocks "g0, g1, etc"
 * Inside generate blocks use short "i<name>" for instance
@@ -152,7 +155,7 @@ TBD
 * Don't use proprietary EDA tool pragmas (use parameters)
 * Only use synthesizable constructs
 * Use $signed() for arithmetic operations on signed types
-. 
+.
 * Allowed keywords: assign, always, input, output, wire, reg, module, endmodule, if/else, case, casez, ~,|,&,^,==, >>, <<, >, <,?,posedge, negedge, generate, for(...), begin, end, $signed,
 
 
@@ -162,7 +165,7 @@ TBD
 * Specify which registers are reset
 * Put lsb on right side, lsb is bit zero
 * Indicate type (read/write/etc)
-* Indicate what 
+* Indicate what
 * All signal should be summarized in a table (markdown)
 * All signals should have waveforms (wavedrom)
 * List internal block hierarhcy (need script for this)
@@ -170,7 +173,7 @@ TBD
 * In tables, place registers in address order
 * In description section, place registeres in alphabetical order
 * Include links in table to descriptions
-* Include "internal register map" 
+* Include "internal register map"
 * Base address of chip/block
 * Table of interrupts..
 * Show how to compile..
@@ -195,9 +198,8 @@ TBD
 * [FuseSoC](https://github.com/olofk/fusesoc)
 
 ## License
-The OH! repository source code is licensed under the MIT license unless otherwise specified. See [LICENSE](LICENSE) for MIT copyright terms. Design specific licenses can be found in the folder root (eg: aes/LICENSE) 
+The OH! repository source code is licensed under the MIT license unless otherwise specified. See [LICENSE](LICENSE) for MIT copyright terms. Design specific licenses can be found in the folder root (eg: aes/LICENSE)
 
 ----
 
 [picture-license](https://commons.wikimedia.org/wiki/File:Lego_Color_Bricks.jpg)
-
