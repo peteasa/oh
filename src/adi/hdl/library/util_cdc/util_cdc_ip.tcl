@@ -26,11 +26,11 @@ source $ad_hdl_dir/library/scripts/adi_ip_xilinx.tcl
 
 adi_ip_create util_cdc
 
+#  "sync_gray.v"
+#   "sync_event.v"
 add_files -fileset [get_filesets sources_1] [list \
-  "sync_gray.v" \
   "sync_bits.v" \
   "sync_data.v" \
-  "sync_event.v" \
 ]
 
 adi_ip_properties_lite util_cdc

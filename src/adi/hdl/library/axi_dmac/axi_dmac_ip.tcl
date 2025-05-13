@@ -7,6 +7,7 @@ global VIVADO_IP_LIBRARY
 
 adi_ip_create axi_dmac
 adi_ip_files axi_dmac [list \
+  "$ad_hdl_dir/library/util_cdc/sync_event.v" \
   "$ad_hdl_dir/library/common/ad_mem_asym.v" \
   "$ad_hdl_dir/library/common/up_axi.v" \
   "inc_id.vh" \
