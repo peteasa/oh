@@ -362,7 +362,7 @@ module dut(/*AUTOARG*/
      */
 
    esaxi #(.S_IDW(S_IDW), .RETURN_ADDR(RETURN_ADDR))
-   esaxi (.s_axi_aclk	        (clk),
+   esaxi (.s_axi_aclk	        (clk1),
 	  .s_axi_aresetn	(nreset),
 	  .s_axi_wstrb	        (mem_m_axi_wstrb[7:4] | mem_m_axi_wstrb[3:0]),
 	  /*AUTOINST*/
