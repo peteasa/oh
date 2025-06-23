@@ -174,24 +174,32 @@ module MMCME2_ADV # (
    //##############
    //#PHASE DELAY
    //##############
-   reg CLKOUT0;
-   reg CLKOUT1;
-   reg CLKOUT2;
-   reg CLKOUT3;
-   reg CLKOUT4;
-   reg CLKOUT5;
-   reg CLKOUT6;
+   reg CLKOUT0_R;
+   reg CLKOUT1_R;
+   reg CLKOUT2_R;
+   reg CLKOUT3_R;
+   reg CLKOUT4_R;
+   reg CLKOUT5_R;
+   reg CLKOUT6_R;
    
    always @ (CLKOUT_DIV)
      begin	
-	CLKOUT0 <= #(CLK0_DELAY) CLKOUT_DIV[0];
-	CLKOUT1 <= #(CLK1_DELAY) CLKOUT_DIV[1];
-	CLKOUT2 <= #(CLK2_DELAY) CLKOUT_DIV[2];
-	CLKOUT3 <= #(CLK3_DELAY) CLKOUT_DIV[3];
-	CLKOUT4 <= #(CLK4_DELAY) CLKOUT_DIV[4];
-	CLKOUT5 <= #(CLK5_DELAY) CLKOUT_DIV[5];
-	CLKOUT6 <= #(CLK6_DELAY) CLKOUT_DIV[6];
+	CLKOUT0_R <= #(CLK0_DELAY) CLKOUT_DIV[0];
+	CLKOUT1_R <= #(CLK1_DELAY) CLKOUT_DIV[1];
+	CLKOUT2_R <= #(CLK2_DELAY) CLKOUT_DIV[2];
+	CLKOUT3_R <= #(CLK3_DELAY) CLKOUT_DIV[3];
+	CLKOUT4_R <= #(CLK4_DELAY) CLKOUT_DIV[4];
+	CLKOUT5_R <= #(CLK5_DELAY) CLKOUT_DIV[5];
+	CLKOUT6_R <= #(CLK6_DELAY) CLKOUT_DIV[6];
      end
+
+   assign CLKOUT0 = CLKOUT0_R;
+   assign CLKOUT1 = CLKOUT1_R;
+   assign CLKOUT2 = CLKOUT2_R;
+   assign CLKOUT3 = CLKOUT3_R;
+   assign CLKOUT4 = CLKOUT4_R;
+   assign CLKOUT5 = CLKOUT5_R;
+   assign CLKOUT6 = CLKOUT6_R;
 
    //##############
    //#DUMMY DRIVES

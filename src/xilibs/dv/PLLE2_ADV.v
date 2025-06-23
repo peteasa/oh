@@ -159,22 +159,29 @@ module PLLE2_ADV #(
    //##############
    //#SUB PHASE DELAY
    //##############
-   reg CLKOUT0;
-   reg CLKOUT1;
-   reg CLKOUT2;
-   reg CLKOUT3;
-   reg CLKOUT4;
-   reg CLKOUT5;
+   reg CLKOUT0_R;
+   reg CLKOUT1_R;
+   reg CLKOUT2_R;
+   reg CLKOUT3_R;
+   reg CLKOUT4_R;
+   reg CLKOUT5_R;
    
    always @ (CLKOUT_DIV_LOCK)
      begin	
-	CLKOUT0 = #(CLK0_DELAY) ~reset & CLKOUT_DIV_LOCK[0];
-	CLKOUT1 = #(CLK1_DELAY) ~reset & CLKOUT_DIV_LOCK[1];
-	CLKOUT2 = #(CLK2_DELAY) ~reset & CLKOUT_DIV_LOCK[2];
-	CLKOUT3 = #(CLK3_DELAY) ~reset & CLKOUT_DIV_LOCK[3];
-	CLKOUT4 = #(CLK4_DELAY) ~reset & CLKOUT_DIV_LOCK[4];
-	CLKOUT5 = #(CLK5_DELAY) ~reset & CLKOUT_DIV_LOCK[5];
+	CLKOUT0_R = #(CLK0_DELAY) ~reset & CLKOUT_DIV_LOCK[0];
+	CLKOUT1_R = #(CLK1_DELAY) ~reset & CLKOUT_DIV_LOCK[1];
+	CLKOUT2_R = #(CLK2_DELAY) ~reset & CLKOUT_DIV_LOCK[2];
+	CLKOUT3_R = #(CLK3_DELAY) ~reset & CLKOUT_DIV_LOCK[3];
+	CLKOUT4_R = #(CLK4_DELAY) ~reset & CLKOUT_DIV_LOCK[4];
+	CLKOUT5_R = #(CLK5_DELAY) ~reset & CLKOUT_DIV_LOCK[5];
      end
+
+   assign CLKOUT0 = CLKOUT0_R;
+   assign CLKOUT1 = CLKOUT1_R;
+   assign CLKOUT2 = CLKOUT2_R;
+   assign CLKOUT3 = CLKOUT3_R;
+   assign CLKOUT4 = CLKOUT4_R;
+   assign CLKOUT5 = CLKOUT5_R;
 
    //##############
    //#DUMMY DRIVES
