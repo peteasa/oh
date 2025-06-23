@@ -56,8 +56,6 @@ if {[llength $ip_files] != 0} {
 
 }
 
-
-
 #TODO: How to check for this status of previous command?
 #foreach file $ip_files {
 #    generate_target all [get_files $file]
@@ -79,6 +77,11 @@ if {[llength $ip_files] != 0} {
 ###########################################################
 
 ipx::package_project -import_files -force -root_dir $projdir
+
+if {$custom_par != ""} {
+    source $custom_par
+}
+
 ipx::remove_memory_map {s_axi} [ipx::current_core]
 ipx::add_memory_map {s_axi} [ipx::current_core]
 ipx::associate_bus_interfaces -busif s_axi -clock sys_clk [ipx::current_core]
@@ -88,13 +91,13 @@ set_property slave_memory_map_ref {s_axi} [ipx::get_bus_interface s_axi [ipx::cu
 
 ipx::add_address_block {axi_lite} [ipx::get_memory_map s_axi [ipx::current_core]]
 set_property range {65536} [ipx::get_address_block axi_lite \
-    [ipx::get_memory_map s_axi [ipx::current_core]]]
+                                [ipx::get_memory_map s_axi [ipx::current_core]]]
 
 set_property vendor              {www.parallella.org}    [ipx::current_core]
 set_property library             {user}                  [ipx::current_core]
 set_property taxonomy            {{/AXI_Infrastructure}} [ipx::current_core]
 set_property vendor_display_name {ADAPTEVA}              [ipx::current_core]
-set_property company_url         {www.parallella.org}    [ipx::current_core]
+set_property company_url         {https://www.parallella.org}    [ipx::current_core]
 set_property supported_families  { \
 					 {virtex7}    {Production} \
 					 {qvirtex7}   {Production} \
