@@ -76,4 +76,10 @@ write_bitstream -force -bin_file -file ${design}.bit
 ###########################################################
 # WRITE SYSTEM DEFINITION
 ###########################################################
+set path_sdk sdk
+file mkdir $path_sdk
+
+write_hw_platform -fixed -include_bit -force ./$path_sdk/${design}.xsa
+
+# legacy artifacts
 write_sysdef -force -hwdef ${design}.hwdef -bitfile ${design}.bit -file ${design}.hdf
