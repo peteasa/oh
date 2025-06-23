@@ -1,0 +1,284 @@
+/*
+ * Copyright (c) 2014 SUSE LINUX Products GmbH
+ * Copyright (c) 2015 SUSE Linux GmbH
+ * Copyright (c) 2015 Adapteva Inc.
+ * Copyright (c) 2022 Ola Jeppsson
+ *
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/ {
+	compatible = "adapteva,parallella", "xlnx,zynq-7000";
+	model = "Adapteva Parallella";
+
+	aliases {
+		ethernet0 = &gem0;
+		serial0 = &uart1;
+	};
+
+	chosen {
+		bootargs = "console=ttyPS0,115200 root=/dev/mmcblk0p2 rootfstype=ext4 rw rootwait";
+		linux,stdout-path = "/amba/serial@e0001000";
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		cr10 {
+			label = "parallella:cr10:usr";
+			gpios = <&gpio0 7 0x0>;
+			default-state = "on";
+		};
+	};
+
+	axi {
+        gem0: ethernet@e000b000 {
+			status = "okay";
+            pinctrl-names = "default";
+            pinctrl-0 = <&pinctrl_gem0_default>;
+            ethernet-phy@0 {
+            	/* Marvell 88E1318 */
+				compatible = "ethernet-phy-id0141.0e90\0ethernet-phy-ieee802.3-c22";
+				reg = <0x00>;
+				device_type = "ethernet-phy";
+				marvell,reg-init = <0x03 0x10 0xff00 0x1e 0x03 0x11 0xfff0 0x0a>;
+			};
+		};
+
+		uart1: serial@e0001000 {
+			compatible = "xlnx,xuartps\0cdns,uart-r1p8";
+			status = "okay";
+			cdns,rx-no-pullup;
+		};
+
+        usb1: usb@e0003000 {
+			compatible = "invalid";
+			status = "okay";
+			dr_mode = "peripheral";
+			usb-phy = <&usb_phy1>;
+            pinctrl-names = "default";
+	        pinctrl-0 = <&pinctrl_usb1_default>;
+		};
+
+        usb0: usb@e0002000 {
+			compatible = "xlnx,zynq-usb-2.20a\0chipidea,usb2\0xlnx,ps7-usb-1.00.a\0xlnx,zynq-usb-1.00.a";
+			status = "okay";
+			dr_mode = "host";
+			usb-phy = <&usb_phy0>;
+            pinctrl-names = "default";
+	        pinctrl-0 = <&pinctrl_usb0_default>;
+		};
+	};
+
+usb_phy0: phy0 {
+    compatible = "ulpi-phy";
+    #phy-cells = <0>;
+    status = "okay";
+    reg = <0xe0002000 0x1000>;
+    view-port = <0x170>;
+    drv-vbus;
+    };
+
+usb_phy1: phy1 {
+    compatible = "ulpi-phy";
+    #phy-cells = <0>;
+    status = "okay";
+    reg = <0xe0003000 0x1000>;
+    view-port = <0x170>;
+    drv-vbus;
+    };
+};
+
+&gpio0 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_gpio0_default>;
+};
+
+&pinctrl0 {
+	pinctrl_gem0_default: gem0-default {
+		mux {
+			function = "ethernet0";
+			groups = "ethernet0_0_grp";
+		};
+
+		conf {
+			groups = "ethernet0_0_grp";
+			slew-rate = <0>;
+			io-standard = <1>;
+		};
+
+		conf-rx {
+			pins = "MIO22", "MIO23", "MIO24", "MIO25", "MIO26", "MIO27";
+			bias-high-impedance;
+			low-power-disable;
+		};
+
+		conf-tx {
+			pins = "MIO16", "MIO17", "MIO18", "MIO19", "MIO20", "MIO21";
+			bias-disable;
+			low-power-enable;
+		};
+
+		mux-mdio {
+			function = "mdio0";
+			groups = "mdio0_0_grp";
+		};
+
+		conf-mdio {
+			groups = "mdio0_0_grp";
+			slew-rate = <0>;
+			io-standard = <1>;
+			bias-disable;
+		};
+	};
+
+	pinctrl_gpio0_default: gpio0-default {
+		mux {
+			function = "gpio0";
+			groups = "gpio0_7_grp";
+		};
+
+		conf {
+			groups = "gpio0_7_grp";
+			slew-rate = <0>;
+			io-standard = <3>;
+		};
+
+		conf-pull-up {
+			pins = "MIO7";
+			bias-pull-up;
+		};
+	};
+
+	pinctrl_qspi0_default: qspi0-default {
+		mux {
+			function = "qspi0";
+			groups = "qspi0_0_grp";
+		};
+
+		conf {
+			groups = "qspi0_0_grp";
+			io-standard = <3>;
+		};
+	};
+
+	pinctrl_sdhci1_default: sdhci1-default {
+		mux {
+			function = "sdio1";
+			groups = "sdio1_0_grp";
+		};
+
+		conf {
+			groups = "sdio1_0_grp";
+			slew-rate = <0>;
+			io-standard = <1>;
+			bias-disable;
+		};
+
+		mux-cd {
+			function = "sdio1_cd";
+			groups = "gpio0_0_grp";
+		};
+
+		conf-cd {
+			groups = "gpio0_0_grp";
+			bias-high-impedance;
+			bias-pull-up;
+			slew-rate = <0>;
+			io-standard = <3>;
+		};
+	};
+
+	pinctrl_uart1_default: uart1-default {
+		mux {
+			function = "uart1";
+			groups = "uart1_0_grp";
+		};
+
+		conf {
+			groups = "uart1_0_grp";
+			slew-rate = <0>;
+			io-standard = <3>;
+		};
+
+		conf-rx {
+			pins = "MIO9";
+			bias-high-impedance;
+		};
+
+		conf-tx {
+			pins = "MIO8";
+			bias-disable = <0>;
+		};
+	};
+
+	pinctrl_usb0_default: usb0-default {
+		mux {
+			function = "usb0";
+			groups = "usb0_0_grp";
+		};
+
+		conf {
+			groups = "usb0_0_grp";
+			slew-rate = <0>;
+			io-standard = <1>;
+		};
+
+		conf-rx {
+			pins = "MIO29", "MIO31", "MIO36";
+			bias-high-impedance;
+		};
+
+		conf-tx {
+			pins = "MIO28", "MIO30", "MIO32", "MIO33", "MIO34",
+			       "MIO35", "MIO37", "MIO38", "MIO39";
+			bias-disable;
+		};
+	};
+
+	pinctrl_usb1_default: usb1-default {
+		mux {
+			function = "usb1";
+			groups = "usb1_0_grp";
+		};
+
+		conf {
+			groups = "usb1_0_grp";
+			slew-rate = <0>;
+			io-standard = <1>;
+		};
+
+		conf-rx {
+			pins = "MIO41", "MIO43", "MIO48";
+			bias-high-impedance;
+		};
+
+		conf-tx {
+			pins = "MIO40", "MIO42", "MIO44", "MIO45", "MIO46",
+			       "MIO47", "MIO49", "MIO50", "MIO51";
+			bias-disable;
+		};
+	};
+};
+
+&qspi {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_qspi0_default>;
+};
+
+&sdhci1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_sdhci1_default>;
+};
+
+&uart1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_uart1_default>;
+};

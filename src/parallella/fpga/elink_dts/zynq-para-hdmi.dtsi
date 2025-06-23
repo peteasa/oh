@@ -1,0 +1,142 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Copyright (c) 2014 SUSE LINUX Products GmbH
+ * Copyright (c) 2015 SUSE Linux GmbH
+ * Copyright (c) 2022 Ola Jeppsson
+ *
+ */
+/delete-node/ &hdmi_0_axi_clkgen_0;
+/delete-node/ &hdmi_0_axi_dmac_0;
+/delete-node/ &hdmi_0_axi_hdmi_tx_0;
+/delete-node/ &hdmi_0_axi_spdif_tx_0;
+/delete-node/ &misc_clk_1;
+/delete-node/ &misc_clk_0;
+
+/ {
+	hdmi-connector {
+		compatible = "hdmi-connector";
+		type = "d";
+		label = "hdmi";
+
+		port {
+			hdmi_connector_in: endpoint {
+				remote-endpoint = <&adv7513_out>;
+			};
+		};
+	};
+};
+
+&amba_pl {
+	hdmi_clock: axi-clkgen@66000000 {
+		compatible = "adi,axi-clkgen-2.00.a";
+		reg = <0x66000000 0x10000>;
+		#clock-cells = <0>;
+        clock-names = "clkin1", "s_axi_aclk";
+		clocks = <&clkc 17>, <&clkc 15>;
+	};
+
+	hdmi_dmac: axi_dmac@43000000 {
+		compatible = "adi,axi-dmac-1.00.a";
+		reg = <0x43000000 0x10000>;
+		#dma-cells = <1>;
+		interrupts = <0 59 4>;
+		interrupt-parent = <&intc>;
+        clock-names = "m_axis_aclk", "m_src_axi_aclk", "s_axi_aclk";
+		clocks = <&clkc 15>, <&clkc 15>, <&clkc 15>;
+
+		adi,channels {
+			#size-cells = <0>;
+			#address-cells = <1>;
+
+			dma-channel@0 {
+				reg = <0>;
+				adi,source-bus-width = <64>;
+				adi,source-bus-type = <0>;
+				adi,destination-bus-width = <64>;
+				adi,destination-bus-type = <1>;
+			};
+		};
+	};
+
+	axi_hdmi_tx: axi_hdmi_tx@6c000000 {
+		compatible = "adi,axi-hdmi-tx-1.00.a";
+		reg = <0x6c000000 0x10000>;
+		dmas = <&hdmi_dmac 0>;
+		dma-names = "video";
+        clock-names = "reference_clk";
+		clocks = <&hdmi_clock>;
+		adi,is-rgb;
+
+		port {
+			axi_hdmi_out: endpoint {
+				remote-endpoint = <&adv7513_in>;
+			};
+		};
+	};
+
+	audio_clock: audio-clock {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <12288000>;
+	};
+
+	axi_spdif_tx: axi-spdif-tx@75c00000 {
+		compatible = "adi,axi-spdif-tx-1.00.a";
+		reg = <0x75c00000 0x1000>;
+        clock-names = "dma_req_aclk", "s_axi_aclk", "spdif_data_clk";
+		clocks = <&clkc 15>, <&clkc 15>, <&audio_clock>;
+		dmas = <&dmac_s 0>;
+		dma-names = "tx";
+
+		#sound-dai-cells = <0>;
+	};
+
+	adv7511_hdmi_snd: adv7511_hdmi_snd {
+		compatible = "adv7511-hdmi-snd";
+		audio-codec = <&adv7513>;
+		cpu-dai = <&axi_spdif_tx>;
+	};
+};
+
+&i2c0 {
+	adv7513: hdmi@39 {
+		compatible = "adi,adv7513";
+		reg = <0x39>;
+		adi,input-depth = <0x8>;
+        adi,input-colorspace = "rgb";
+		adi,input-style = <0x2>;
+        adi,input-clock = "1x";
+		adi,clock-delay = <0x3>;
+        adi,input-justification = "evenly";
+		adi,input-id = <0x1>;
+		adi,sync-pulse = <0x3>;
+		adi,up-conversion = <0x0>;
+		adi,timing-generation-sequence = <0x0>;
+		adi,vsync-polarity = <0x2>;
+		adi,hsync-polarity = <0x2>;
+		adi,tdms-clock-inversion;
+
+		#sound-dai-cells = <0>;
+
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			port@0 {
+				reg = <0>;
+
+				adv7513_in: endpoint {
+					remote-endpoint = <&axi_hdmi_out>;
+				};
+			};
+
+			port@1 {
+				reg = <1>;
+
+				adv7513_out: endpoint {
+					remote-endpoint = <&hdmi_connector_in>;
+				};
+			};
+		};
+	};
+};

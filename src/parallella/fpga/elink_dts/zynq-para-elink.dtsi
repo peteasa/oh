@@ -1,0 +1,137 @@
+/*
+ * Copyright (c) 2014 SUSE LINUX Products GmbH
+ * Copyright (c) 2015 SUSE Linux GmbH
+ * Copyright (c) 2015 Adapteva Inc.
+ *
+ * This software is licensed under the terms of the GNU General Public
+ * License version 2, as published by the Free Software Foundation, and
+ * may be copied, distributed, and modified under those terms.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+/ {
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+		emem: emem@3e000000 {
+			reg = <0x3e000000 0x2000000>;
+			no-map;
+		};
+	};
+
+	elink0: elink0@80000000 {
+	};
+
+	iio_hwmon {
+		compatible = "iio-hwmon";
+		/* 1 temperature channel, and 8 voltage channels */
+		io-channels = <&adc 0>,
+			    <&adc 1>, <&adc 2>, <&adc 3>, <&adc 4>,
+			    <&adc 5>, <&adc 6>, <&adc 7>, <&adc 8>;
+	};
+};
+
+&elink0 {
+	compatible = "adapteva,elink";
+
+	interrupts = <0 55 1>;
+	interrupt-parent = <&intc>;
+
+	clocks = <&clkc 15>, <&clkc 16>, <&clkc 17>, <&clkc 18>;
+	clock-names = "fclk0", "fclk1", "fclk2", "fclk3";
+
+	#address-cells = <2>; /* <north-west core's id, side (NESW)> */
+	#size-cells = <2>; /* <#chip rows, #chip cols> */
+
+	/* Can have more than one reserved memory region. Memory regions
+	 * can be shared by elinks.  */
+	memory-region = <&emem>;
+
+	/* Can have at most one child node with compatible string
+	 * "adapteva,array" or "adapteva,gpio" ??? */
+
+	/* First range is FPGA config regs.
+	 * Second range is mappable emesh region.
+	 * _4_ * 64 * (1<<20)
+	 */
+	reg = <0x81000000 0x100000>, <0x80000000 0x10000000>;
+
+	/* (Optional) coreid pin-out register(s) configuration. */
+	/* If we add some constraints we could derive this from the
+	 * child node ???
+	 */
+	/*adapteva,coreid = <0x808>; */
+
+	/* No connection between elink coreid pins and the Epiphany chip */
+	adapteva,no-coreid-pinout;
+
+	/* Initial FPGA elink MMU config. This is hardcoded in the FPGA
+	 * code now.
+	 * Not sure if we actually need it here. Driver needs to probe
+	 * bitstream version to check whether it is supported or not
+	 * anyways. And if not this is the only mapping we will allow */
+	adapteva,mmu = <0x8e000000 0x3e000000 0x02000000>;
+
+	/* Optional power / thermal control. Will not implement much for
+	 * now but will read supply voltage to check if we can
+	 * run chip elink TX at full speed. Can be a list. */
+	vdd-supply = <&regulator_epiphany>; /* Can be a list */
+	/*io-channels = <&adc 0>;*/
+	/*io-channel-names = "zynq_temp";*/
+
+	array0@808 {
+		compatible = "adapteva,chip-array";
+		/* North-westmost coreid, #NESW, #chip rows, #chip cols */
+		reg = <0x808 1 1 1>;
+
+/*
+		// reg North=0, East=1, South=2, West=3
+		ports {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			port@0 {
+				reg = <1>;
+
+				array0_east: endpoint {
+					remote-endpoint = <&elink0_port>;
+				};
+			};
+		};
+*/
+	};
+};
+
+&i2c0 {
+	status = "okay";
+
+	isl9305: isl9305@68 {
+		compatible = "isil,isl9305", "isl,isl9305";
+		reg = <0x68>;
+
+		regulators {
+			regulator_epiphany: dcd1 {
+				regulator-name = "VDD_DSP";
+				regulator-min-microvolt =  <900000>;
+				regulator-max-microvolt = <1200000>;
+			};
+			dcd2 {
+				regulator-name = "1P35V";
+				regulator-always-on;
+			};
+			ldo1 {
+				regulator-name = "VDD_ADJ";
+				regulator-always-on;
+			};
+			ldo2 {
+				regulator-name = "VDD_GPIO";
+				regulator-always-on;
+			};
+		};
+	};
+};
+
