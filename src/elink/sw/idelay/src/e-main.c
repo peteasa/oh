@@ -13,98 +13,16 @@
 #include <err.h>
 #include <stdint.h>
 #include <assert.h>
+#include "elink_common.h"
+
+// Set to 1 to display verbose results
+#define DISPLAY_RESULTS 0
 
 #define TAPS 64
 
-// Epiphany system registers
-typedef enum {
-	E_SYS_RESET	= 0xF0200,
-	E_SYS_CLKCFG	= 0xF0204,
-	E_SYS_CHIPID	= 0xF0208,
-	E_SYS_VERSION	= 0xF020c,
-	E_SYS_TXCFG	= 0xF0210,
-	E_SYS_RXCFG	= 0xF0300,
-	E_SYS_RXDMACFG	= 0xF0500,
-} e_sys_reg_id_t;
+// Forward declarations
+int my_reset_system(void);
 
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int reset:1;
-//		unsigned int chip_reset:1;
-//		unsigned int reset:1;
-	};
-} e_sys_reset_t;
-
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int cclk_enable:1;
-		unsigned int lclk_enable:1;
-		unsigned int cclk_bypass:1;
-		unsigned int lclk_bypass:1;
-		unsigned int cclk_divider:4;
-		unsigned int lclk_divider:4;
-	};
-} e_sys_clkcfg_t;
-
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int col:6;
-		unsigned int row:6;
-	};
-} e_sys_chipid_t;
-
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int platform:8;
-		unsigned int revision:8;
-	};
-} e_sys_version_t;
-
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int enable:1;
-		unsigned int mmu_enable:1;
-		unsigned int remap_cfg:2;
-		unsigned int ctrlmode:4;
-		unsigned int ctrlmode_select:1;
-		unsigned int transmit_mode:3;
-	};
-} e_sys_txcfg_t;
-
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int testmode:1;
-		unsigned int mmu_enable:1;
-		unsigned int remap_cfg:2;
-		unsigned int remap_mask:12;
-		unsigned int remap_base:12;
-		unsigned int timeout:2;
-	};
-} e_sys_rxcfg_t;
-
-typedef union {
-	unsigned int reg;
-	struct {
-		unsigned int enable:1;
-		unsigned int master_mode:1;
-		unsigned int __reserved1:3;
-		unsigned int width:2;
-		unsigned int __reserved2:3;
-		unsigned int message_mode:1;
-		unsigned int src_shift:1;
-		unsigned int dst_shift:1;
-	};
-} e_sys_rx_dmacfg_t;
-
-
-#define EPIPHANY_DEV "/dev/epiphany/mesh0"
-#define ESYS_REGS_BASE       0x81000000UL
 static ssize_t ee_write_esys(off_t to_addr, int data)
 {
        e_mmap_t  esys;
@@ -119,7 +37,7 @@ static ssize_t ee_write_esys(off_t to_addr, int data)
                return E_ERR;
        }
 
-       esys.phy_base = (ESYS_REGS_BASE + to_addr);
+       esys.phy_base = (ELINK_BASE + to_addr);
        esys.page_base = ee_rndl_page(esys.phy_base);
        esys.page_offset = esys.phy_base - esys.page_base;
        esys.map_size = sizeof(int) + esys.page_offset;
@@ -131,7 +49,7 @@ static ssize_t ee_write_esys(off_t to_addr, int data)
 
        if (esys.mapped_base == MAP_FAILED)
        {
-               warnx("ee_write_esys(): ESYS mmap failure.");
+               warnx("ee_write_esys(): ESYS mmap failure. Have you enabled unsafe access?");
                return E_ERR;
        }
 
@@ -160,7 +78,7 @@ static int ee_read_esys(off_t from_addr)
                return E_ERR;
        }
 
-       esys.phy_base = (ESYS_REGS_BASE + from_addr);
+       esys.phy_base = (ELINK_BASE + from_addr);
        esys.page_base = ee_rndl_page(esys.phy_base);
        esys.page_offset = esys.phy_base - esys.page_base;
        esys.map_size = sizeof(int) + esys.page_offset;
@@ -191,7 +109,7 @@ int main(int argc, char *argv[]){
   e_platform_t platform;
   e_epiphany_t dev, *pdev;
   e_mem_t      dram, *pdram;
-  size_t       size;
+  int          err;
   int status=1;//pass
   char elfFile[4096];
   pdev  = &dev;
@@ -239,9 +157,9 @@ int main(int argc, char *argv[]){
 
   //Initalize Epiphany device
   e_set_host_verbosity(H_D0);
-  e_init(NULL);                      
+  e_init(NULL);
   my_reset_system();
-  e_get_platform_info(&platform);                          
+  e_get_platform_info(&platform);
   e_open(&dev, 0, 0, 1, 1); //open core 0,0
   e_alloc(pdram, 0x00000000, 0x00400000);
 
@@ -252,41 +170,42 @@ int main(int argc, char *argv[]){
     my_reset_system();
     //write/read register 
     a=0x0;
-    ee_write_esys(0xF0310, idelay[i]);
-    ee_write_esys(0xF0314, idelay[i+1]);
-    ee_write_esys(0xF0214, a);//TXSTATUS
-    ee_write_esys(0xF021C, a);//TXMONITOR
-    ee_write_esys(0xF0304, a);//RXSTATUS
+    ee_write_esys(ELINK_RXDELAY0, idelay[i]);
+    ee_write_esys(ELINK_RXDELAY1, idelay[i+1]);
+    ee_write_esys(ELINK_TXSTATUS, a);
+    ee_write_esys(ELINK_TXMONITOR,a);
+    ee_write_esys(ELINK_RXSTATUS, a);
     printf ("DELAY=%08x ",idelay[i]);
     usleep(100000); 
-    //e_write(pdram, 0, 0, 0x0, (void *) &(data), size);    
-    //e_read(pdram, 0, 0, 0x0, (void *) &(result), size);        
-    //usleep(100000);
+    e_write(pdram, 0, 0, 0x0, (void *) &(data), sizeof(int));
+    e_read(pdram, 0, 0, 0x0, (void *) &(result), sizeof(int));
+    usleep(100000);
     for (j=0;j<N;j++){
       e_write(pdram, 0, 0, 4*j, (void *) &(data), sizeof(int));     
       e_read(pdram, 0, 0, 4*j, (void *) &(tmp), sizeof(int));        
       //printf("input[%d]=%08x\n", j,tmp);
     }
     //load program
-    e_load_group(elfFile, &dev, 0, 0, 1, 1, E_FALSE);    
-    ee_write_esys(0xF021C, a);//clear monitor
-    e_start_group(&dev);        
+    err = e_load_group(elfFile, &dev, 0, 0, 1, 1, E_FALSE);    
+    err = ee_write_esys(0xF021C, a);//clear monitor
+    err = e_start_group(&dev);        
     usleep(1000000);   
     for (j=0;j<N;j++){
-      e_read(pdram, 0, 0, 4*j, (void *) &tmp, sizeof(int));      
-      //printf("result[%d]=%08x\n", j,tmp);
+      err = e_read(pdram, 0, 0, 4*j, (void *) &tmp, sizeof(int));      
+      if (0 == j%100 && DISPLAY_RESULTS)
+            printf("result[%d]=%08x\n", j,tmp);
     }
     //check result
     usleep(100000);   
     unsigned int status;
     unsigned int failures=0xDEADBEEF;
     unsigned int write_failures=0;
-    e_read(pdram, 0, 0, 0, (void *) &status, sizeof(int));     
-    e_read(pdram, 0, 0, 4, (void *) &failures, sizeof(int));     
-    int txstatus  = ee_read_esys(0xF0214);//TXSTATUS
-    int txmonitor = ee_read_esys(0xF021c);//TXMONITOR
-    int packet    = ee_read_esys(0xF0220);//TXPACKET
-    int rxstatus  = ee_read_esys(0xF0304);//RXSTATUS
+    err = e_read(pdram, 0, 0, 0, (void *) &status, sizeof(int));     
+    err = e_read(pdram, 0, 0, 4, (void *) &failures, sizeof(int));     
+    int txstatus  = ee_read_esys(ELINK_TXSTATUS);
+    int txmonitor = ee_read_esys(ELINK_TXMONITOR);
+    int packet    = ee_read_esys(ELINK_TXPACKET);
+    int rxstatus  = ee_read_esys(ELINK_RXSTATUS);
     printf("TXMON=%d TXSTAT=0x%08x RXSTAT=0x%08x PACKET=0x%08x", txmonitor, txstatus, rxstatus, packet);
     if((status==0x12345678) & (write_failures==0)){
       printf(" PASS\n");
@@ -315,86 +234,107 @@ int my_reset_system(void)
 	int rc = 0;
 	uint32_t divider;
 	uint32_t chipid;
-	e_sys_txcfg_t txcfg         = { .reg = 0 };
-	e_sys_rxcfg_t rxcfg         = { .reg = 0 };
-	e_sys_rx_dmacfg_t rx_dmacfg = { .reg = 0 };
-	e_sys_clkcfg_t clkcfg       = { .reg = 0 };
-	e_sys_reset_t resetcfg      = { .reg = 0 };
+	elink_txcfg_t txcfg         = { .reg = 0 };
+	elink_rxcfg_t rxcfg         = { .reg = 0 };
+	elink_dmacfg_t rx_dmacfg    = { .reg = 0 };
+	// elink_clkcfg_t clkcfg       = { .reg = 0 };
+	elink_reset_t resetcfg      = { .reg = 0 };
 	e_epiphany_t dev;
 
 #if 1
-	resetcfg.reset = 1;
-	if (sizeof(int) != ee_write_esys(E_SYS_RESET, resetcfg.reg))
+	resetcfg.tx_soft_reset = 1;
+	resetcfg.rx_soft_reset = 1;
+	if (sizeof(int) != ee_write_esys(ELINK_RESET, resetcfg.reg)) {
+		printf ("my_reset_system(): ELINK_RESET failed"); fflush(stdout);
 		goto err;
+	}
 	usleep(1000);
 
 	/* Do we need this ? */
-	resetcfg.reset = 0;
-	if (sizeof(int) != ee_write_esys(E_SYS_RESET, resetcfg.reg))
+	resetcfg.tx_soft_reset = 0;
+	resetcfg.rx_soft_reset = 0;
+	if (sizeof(int) != ee_write_esys(ELINK_RESET, resetcfg.reg)) {
+		printf ("my_reset_system(): clear ELINK_RESET failed"); fflush(stdout);
 		goto err;
+	}
 	usleep(1000);
 #endif
 
 #if 1 // ???
 	chipid = 0x808 /* >> 2 */;
-	if (sizeof(int) != ee_write_esys(E_SYS_CHIPID, chipid /* << 2 */))
+	if (sizeof(int) != ee_write_esys(ELINK_CHIPID, chipid /* << 2 */)) {
+		printf ("my_reset_system(): ELINK_CHIPID failed"); fflush(stdout);
 		goto err;
+	}
 	usleep(1000);
 #endif
 
 #if 1
 	txcfg.enable = 1;
 	txcfg.mmu_enable = 0;
-	if (sizeof(int) != ee_write_esys(E_SYS_TXCFG, txcfg.reg))
+	if (sizeof(int) != ee_write_esys(ELINK_TXCFG, txcfg.reg)) {
+		printf ("my_reset_system(): ELINK_TXCFG failed"); fflush(stdout);
 		goto err;
+	}
 	usleep(1000);
 #endif
 
-	rxcfg.testmode = 0; /* bug/(feature?) workaround */
+	rxcfg.test_mode = 0; /* bug/(feature?) workaround */
 	rxcfg.mmu_enable = 0;
-	rxcfg.remap_cfg = 1; // "static" remap_addr
-	rxcfg.remap_mask = 0xfe0; // should be 0xfe0 ???
-	rxcfg.remap_base = 0x3e0;
-	if (sizeof(int) != ee_write_esys(E_SYS_RXCFG, rxcfg.reg))
+	rxcfg.remap_mode = 1; //"static" remap_addr
+	rxcfg.remap_sel = 0xfe0; // should be 0xfe0 ???
+	rxcfg.remap_pattern = 0x3e0;
+	if (sizeof(int) != ee_write_esys(ELINK_RXCFG, rxcfg.reg)) {
+		printf ("my_reset_system(): ELINK_RXCFG failed"); fflush(stdout);
 		goto err;
+	}
 	usleep(1000);
 
 #if 0 // ?
 	rx_dmacfg.enable = 1;
-	if (sizeof(int) != ee_write_esys(E_SYS_RXDMACFG, rx_dmacfg.reg))
+	if (sizeof(int) != ee_write_esys(ELINK_RXDMACFG, rx_dmacfg.reg)) {
+		printf ("my_reset_system(): ELINK_RXDMACFG failed"); fflush(stdout);
 		goto err;
+	}
 	usleep(1000);
 #endif
 	rc = E_ERR;
-	
+
 	if ( E_OK != e_open(&dev, 2, 3, 1, 1) ) {
-	  warnx("e_reset_system(): e_open() failure.");
-	  goto err;
+		warnx("e_reset_system(): e_open() failure.");
+		goto err;
 	}
-	
+
 	txcfg.ctrlmode = 0x5; /* Force east */
-	txcfg.ctrlmode_select = 0x1; /* */
+	//txcfg.ctrlmode_select = 0x1; /* */
 	usleep(1000);
-	if (sizeof(int) != ee_write_esys(E_SYS_TXCFG, txcfg.reg))
-	  goto cleanup_platform;
-	
-	divider = 0; /* Divide by 4, see data sheet */
-	//divider = 0; /* Divide by 2, see data sheet */
+	if (sizeof(int) != ee_write_esys(ELINK_TXCFG, txcfg.reg)) {
+		printf ("my_reset_system(): ELINK_TXCFG force east failed"); fflush(stdout);
+		goto cleanup_platform;
+	}
+
+	//divider = 2; /* Divide by 8, see data sheet */
+	//divider = 1; /* Divide by 4, see data sheet */
+	divider = 0; /* Divide by 2, see data sheet */
 	usleep(1000);
-	if (sizeof(int) != e_write(&dev, 0, 0, E_REG_LINKCFG, &divider, sizeof(int)))
-	  goto cleanup_platform;
-	
+	if (sizeof(int) != e_write(&dev, 0, 0, E_REG_LINKCFG, &divider, sizeof(int))) {
+		printf ("my_reset_system(): E_REG_LINKCFG failed"); fflush(stdout);
+		goto cleanup_platform;
+	}
+
 	txcfg.ctrlmode = 0x0;
-	txcfg.ctrlmode_select = 0x0; /* */
+	//txcfg.ctrlmode_select = 0x0; /* */
 	usleep(1000);
-	if (sizeof(int) != ee_write_esys(E_SYS_TXCFG, txcfg.reg))
-	  goto cleanup_platform;
-	
+	if (sizeof(int) != ee_write_esys(ELINK_TXCFG, txcfg.reg)) {
+		printf ("my_reset_system(): E_REG_TXCFG failed"); fflush(stdout);
+		goto cleanup_platform;
+	}
+
 	rc = E_OK;
-	
+
 cleanup_platform:
 	e_close(&dev);
-	
+
 	usleep(1000);
 	return E_OK;
 

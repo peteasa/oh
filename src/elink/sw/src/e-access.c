@@ -11,6 +11,12 @@
 //Declarations
 void usage();
 
+extern void e_debug_unmap(void *ptr);
+extern int e_debug_read(unsigned addr, unsigned *data);
+extern int e_debug_write(unsigned addr, unsigned data);
+extern int e_debug_map(unsigned addr, void **ptr, unsigned *offset);
+extern void e_debug_init(int version);
+
 //########################################################################
 //# "Epiphany Access Function (e-access)"
 //# Decodes a 104 bit packet and sends transaction to elink
@@ -21,11 +27,11 @@ int main(int argc, char *argv[]){
     unsigned int rdata;
     int ret;
     if(argc < 2){
-	usage();
-	return EXIT_FAILURE;
+        usage();
+        return EXIT_FAILURE;
     }
     else{
-	sscanf (argv[1],"%x_%x_%x_%x",&srcaddr,&data,&dstaddr,&command); 
+        sscanf (argv[1],"%x_%x_%x_%x",&srcaddr,&data,&dstaddr,&command); 
     }
     //Parse command field
     write    = command & 0x01;
@@ -37,11 +43,11 @@ int main(int argc, char *argv[]){
 
     //Access
     if(write){
-	e_debug_write(dstaddr,data);
+        e_debug_write(dstaddr,data);
     }
     else{
-	e_debug_read(dstaddr, &rdata);
-	printf("[%08x]=0x%08x\n",dstaddr,rdata);
+        e_debug_read(dstaddr, &rdata);
+        printf("[%08x]=0x%08x\n",dstaddr,rdata);
     }
 }
 

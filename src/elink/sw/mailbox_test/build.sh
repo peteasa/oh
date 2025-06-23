@@ -3,9 +3,9 @@
 set -e
 
 ESDK=${EPIPHANY_HOME}
-ELIBS="-L ${ESDK}/tools/host/lib"
-EINCS="-I ${ESDK}/tools/host/include"
-ELDF=${ESDK}/bsps/current/internal.ldf
+ELIBS="-B ${ESDK}/lib -B ${ESDK}/lib/epiphany-elf/11.3.0"
+EINCS="-I ../include -I ${ESDK}/include"
+ELDF=/usr/share/epiphany/bsps/current/internal.ldf
 
 SCRIPT=$(readlink -f "$0")
 EXEPATH=$(dirname "$SCRIPT")
@@ -27,10 +27,10 @@ case $(uname -p) in
 esac
 
 # Build HOST side application
-${CROSS_PREFIX}gcc src/e-main.c -o bin/e-main.elf ${EINCS} ${ELIBS} -le-hal -le-loader -lpthread
+${CROSS_PREFIX}gcc src/e-main.c -o bin/e-main.elf -I ../include -le-hal -le-loader -lpthread
 
 # Build DEVICE side program
-e-gcc -Os -T ${ELDF} src/e-task.c -o bin/e-task.elf -le-lib -lm -ffast-math
+/usr/bin/epiphany-elf-gcc -Os -T ${ELDF} src/e-task.c -o bin/e-task.elf ${EINCS} ${ELIBS} -le-lib -lm -ffast-math
 
 # Convert ebinary to SREC file
-e-objcopy --srec-forceS3 --output-target srec bin/e-task.elf bin/e-task.srec
+/usr/bin/epiphany-elf-objcopy --srec-forceS3 --output-target srec bin/e-task.elf bin/e-task.srec

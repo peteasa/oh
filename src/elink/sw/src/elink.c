@@ -6,9 +6,15 @@
 #include <fcntl.h>
 #include "elink_regs.h"
 
+#define EPIPHANY_DEV   "/dev/epiphany/mesh0"
 #define EPIPHANY_BASE  0x80800000
-#define ELINK_BASE     0x81000000 //Not used for now
 
+#define DEBUG_PRINT 0
+
+// 0000 0000 0000 0000 0000 0000 0000 0000
+// 31   27   23   19   15   11   7    3
+// row: 32 = 0x20 << 26 = 0x80000000
+// col: 8  = 0x08 << 20 = 0x00800000
 #define COREADDR(a,b)  ((a << 26) | ( b << 20))
 
 //TODO: Remove globals?
@@ -31,14 +37,12 @@ int e_debug_read(unsigned addr, unsigned *data) {
   unsigned offset;
   char *ptr;
 
-  //Debug
-  //printf("read addr=%08x data=%08x\n", addr, *data);
-  //fflush(stdout);
+  if (DEBUG_PRINT) printf("read addr=%08x data=%08x\n", addr, *data); fflush(stdout);
 
   //Map device into memory
   ret = e_debug_map(addr, (void **)&ptr, &offset);
 
-  //Read value from the device register  
+  //Read value from the device register
   *data = *((unsigned *)(ptr + offset));
 
   //Unmap device memory
@@ -54,9 +58,8 @@ int e_debug_write(unsigned addr, unsigned data) {
   unsigned offset;
   char *ptr;
 
-  //Debug
-  //printf("write addr=%08x data=%08x\n", addr, data);
-  //fflush(stdout);
+  if (DEBUG_PRINT) printf("write addr=%08x data=%08x\n", addr, data); fflush(stdout);
+
   //Map device into memory
   ret = e_debug_map(addr, (void **)&ptr, &offset);
 
@@ -74,7 +77,7 @@ int e_debug_write(unsigned addr, unsigned data) {
 //############################################
 int e_debug_map(unsigned addr, void **ptr, unsigned *offset) {
 
-  unsigned page_addr; 
+  unsigned page_addr;
 
   //What does this do??
   if(!page_size)
@@ -82,7 +85,7 @@ int e_debug_map(unsigned addr, void **ptr, unsigned *offset) {
 
   //Open /dev/mem file if not already
   if(mem_fd < 1) {
-    mem_fd = open ("/dev/epiphany", O_RDWR);
+    mem_fd = open (EPIPHANY_DEV, O_RDWR);
     if (mem_fd < 1) {
       perror("f_map");
       return -1;
@@ -96,7 +99,7 @@ int e_debug_map(unsigned addr, void **ptr, unsigned *offset) {
     *offset = addr - page_addr;
 
   //Perform mmap
-  *ptr = mmap(NULL, page_size, PROT_READ|PROT_WRITE, MAP_SHARED, 
+  *ptr = mmap(NULL, page_size, PROT_READ|PROT_WRITE, MAP_SHARED,
 	      mem_fd, page_addr);
 
   //Check for errors
@@ -104,13 +107,13 @@ int e_debug_map(unsigned addr, void **ptr, unsigned *offset) {
       return -2;
   else
       return 0;
-}	
+}
 
 //#########################################
 //# Unmap Memory
 //#########################################
 void e_debug_unmap(void *ptr) {
-  
+
     //Unmap memory
     if(ptr && page_size){
 	munmap(ptr, page_size);
@@ -178,23 +181,23 @@ void e_debug_init(int version){
     e_debug_write(E_SYS_CFGTX, data);//set ctrlmode
     usleep(1000);
     data = 0x1;
-    e_debug_write((EPIPHANY_BASE + COREADDR(2,3) + E_REG_LINKMODE), data);//set half speed
+    e_debug_write((EPIPHANY_BASE + COREADDR(2,3) + E_REG_LINKCFG), data);//set half speed
     usleep(1000);
     data = 0x1;
     e_debug_write(E_SYS_CFGTX, data);//set ctrlmode back to normal
     usleep(1000);
   }
-  else{   
+  else{
+    // Reduce Epiphany Elink TX to half speed
     /*
-    //Reduce Epiphany Elink TX to half speed    
     data = 0x150;
-    e_debug_write(ELINK_TXCFG, data);//set ctrlmode
+    e_debug_write(ELINK_BASE + ELINK_TXCFG, data);//set ctrlmode
     usleep(1000);
     data = 0x1;
-    e_debug_write((EPIPHANY_BASE + COREADDR(2,3) + E_REG_LINKMODE), data);//set half speed
+    e_debug_write((EPIPHANY_BASE + COREADDR(2, 3) + E_REG_LINKCFG), data);//set half speed
     usleep(1000);
     data = 0x0;
-    e_debug_write(ELINK_TXCFG, data);//set ctrlmode back to normal
+    e_debug_write(ELINK_BASE + ELINK_TXCFG, data);//set ctrlmode back to normal
     usleep(1000);
     */
   }
