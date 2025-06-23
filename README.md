@@ -86,7 +86,9 @@ Scripts are located in the './scripts' directory.
 
 ## How to build
 
-TBD
+When this file was last committed oh was build with Vivado / Vitis version 2024.2.  Check the system_bd.tcl files for the version of Vivado / Vitis to use.  The devicetree created for each build can be used on the Parallella board.
+
+The Makefile at src/parallella/fpga/Makefile can be used to build the Analog Devices Inc HDMI library (src/adi) plus all the Parallella target .bit.bin and .dtb files.  There are several targets in the Makefile to build separately.  Individual Makefiles or build.sh files can be found in various locations to build parts.  Alternatively prebuild .bit.bin and .dtb files are available.
 
 ## Design Guide
 
