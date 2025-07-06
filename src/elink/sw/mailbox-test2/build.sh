@@ -3,31 +3,35 @@
 set -e
 
 ESDK=${EPIPHANY_HOME}
-ELIBS="-L ${ESDK}/tools/host/lib"
-EINCS="-I ${ESDK}/tools/host/include"
-ELDF=${ESDK}/bsps/current/internal.ldf
+ELIBS="-B ${ESDK}/lib -B ${ESDK}/lib/epiphany-elf/11.3.0"
+EINCS="-I ../include -I ${ESDK}/include"
+ELDF=/usr/share/epiphany/bsps/current/internal.ldf
+
+SCRIPT=$(readlink -f "$0")
+EXEPATH=$(dirname "$SCRIPT")
+cd $EXEPATH
 
 # Create the binaries directory
 mkdir -p bin/
 
-if [ -z "${CROSS_COMPILE+xxx}" ]; then
+CROSS_PREFIX=
 case $(uname -p) in
 	arm*)
 		# Use native arm compiler (no cross prefix)
-		CROSS_COMPILE=
+		CROSS_PREFIX=
 		;;
 	   *)
 		# Use cross compiler
-		CROSS_COMPILE="arm-linux-gnueabihf-"
+		CROSS_PREFIX="arm-linux-gnueabihf-"
 		;;
 esac
-fi
 
 # Build HOST side application
-${CROSS_COMPILE}gcc src/main.c -g -o bin/main.elf  ${EINCS} ${ELIBS} -le-hal -le-loader -lpthread
+${CROSS_PREFIX}gcc src/main.c -o bin/main.elf -I ../include -le-hal -le-loader -lpthread
 
 # Build DEVICE side program
 OPT=3
-e-gcc -funroll-loops -g -T ${ELDF} -O${OPT} src/emain.c -o bin/emain.elf -le-lib
+/usr/bin/epiphany-elf-gcc -O${OPT} -T ${ELDF} src/emain.c -o bin/emain.elf ${EINCS} ${ELIBS} -le-lib -lm -ffast-math
 
-
+# Convert ebinary to SREC file
+/usr/bin/epiphany-elf-objcopy --srec-forceS3 --output-target srec bin/emain.elf bin/emain.srec

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sched.h>
 #include <stdint.h>
 #include <time.h>
 
@@ -11,6 +12,7 @@
 #include <fcntl.h>
 
 #include <e-hal.h>
+#include <e-loader.h>
 
 #include <stdbool.h>
 
