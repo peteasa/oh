@@ -242,7 +242,7 @@ static int elink_write(off_t dstaddr, uint32_t *data)
         //if (32 <= n_row && n_row < 36 && 8 <= n_col && n_col < 12) {printf("elink_write ecore: 0x%x address: 0x%x\n", coreid, addr);}
         if (0xF0000 <= addr) {
             diag(H_D2) { fprintf(diag_fd, "elink_write ecore reg: 0x%x address: 0x%x\n", base, addr); }
-            rtn = ee_write_elink_mem(&ecore_local_mbuf, base, addr, data);
+            rtn = ee_write_elink_mem(&ecore_reg_mbuf, base, addr, data);
         } else {
             diag(H_D2) { fprintf(diag_fd, "elink_write ecore mem: 0x%x address: 0x%x\n", base, addr); }
             rtn = ee_write_elink_mem(&ecore_local_mbuf, base, addr, data);
