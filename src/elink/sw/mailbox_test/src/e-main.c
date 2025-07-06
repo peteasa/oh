@@ -162,8 +162,8 @@ int main(int argc, char *argv[]){
   e_alloc(pdram, 0x00000000, 0x00400000);
 
   //Set Idelay
-  ee_write_esys(E_SYS_RXDELAY0, idelay[2*7]);
-  ee_write_esys(E_SYS_RXDELAY1, idelay[2*7+1]);
+  ee_write_esys(ELINK_RXDELAY0, idelay[2*7]);
+  ee_write_esys(ELINK_RXDELAY1, idelay[2*7+1]);
 
   //Start Program
   e_load_group(elfFile, &dev, 0, 0, 1, 1, E_FALSE);  
@@ -175,10 +175,10 @@ int main(int argc, char *argv[]){
   int ddata;
   for(i=0;i<32;i++){
     e_read(pdram,0,0, i*4, &ddata, sizeof(ddata));
-    pre_stat  = ee_read_esys(E_SYS_MAILBOXSTAT);
-    mbox_lo   = ee_read_esys(E_SYS_MAILBOXLO);
-    //mbox_hi   = ee_read_esys(E_SYS_MAILBOXHI);
-    post_stat   = ee_read_esys(E_SYS_MAILBOXSTAT);
+    pre_stat  = ee_read_esys(ELINK_MAILBOXSTAT);
+    mbox_lo   = ee_read_esys(ELINK_MAILBOXLO);
+    //mbox_hi   = ee_read_esys(ELINK_MAILBOXHI);
+    post_stat   = ee_read_esys(ELINK_MAILBOXSTAT);
     printf ("PRE_STAT=%08x POST_STAT=%08x LO=%08x HI=%08x DDATA=%04x\n", pre_stat, post_stat, mbox_lo, mbox_hi,ddata);
   }
 
@@ -232,10 +232,10 @@ int my_reset_system(void)
 	usleep(1000);
 #endif
 
-#if 1 // ???
+#if 0 // ???
 	chipid = 0x808 /* >> 2 */;
-	if (sizeof(int) != ee_write_esys(ELINK_CHIPID, chipid /* << 2 */)) {
-		printf ("my_reset_system(): ELINK_CHIPID failed"); fflush(stdout);
+	if (sizeof(int) != ee_write_esys(E_REG_COREID, chipid /* << 2 */)) {
+		printf ("my_reset_system(): E_REG_COREID failed"); fflush(stdout);
 		goto err;
 		}
 	usleep(1000);
