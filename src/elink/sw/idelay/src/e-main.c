@@ -260,10 +260,10 @@ int my_reset_system(void)
 	usleep(1000);
 #endif
 
-#if 1 // ???
+#if 0 // ???
 	chipid = 0x808 /* >> 2 */;
-	if (sizeof(int) != ee_write_esys(ELINK_CHIPID, chipid /* << 2 */)) {
-		printf ("my_reset_system(): ELINK_CHIPID failed"); fflush(stdout);
+	if (sizeof(int) != ee_write_esys(E_REG_COREID, chipid /* << 2 */)) {
+		printf ("my_reset_system(): E_REG_COREID failed"); fflush(stdout);
 		goto err;
 	}
 	usleep(1000);
