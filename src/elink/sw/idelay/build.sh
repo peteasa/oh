@@ -31,7 +31,8 @@ esac
 ${CROSS_PREFIX}gcc src/e-main.c -o bin/e-main.elf -I ../include -le-hal -le-loader -lpthread
 
 # Build DEVICE side program
-/usr/bin/epiphany-elf-gcc -O0 -T ${ELDF} src/e-task.c -o bin/e-task.elf ${EINCS} ${EDIRS} -le-lib -lm -ffast-math
+OPT=0
+/usr/bin/epiphany-elf-gcc -O${OPT} -T ${ELDF} src/e-task.c -o bin/e-task.elf ${EINCS} ${EDIRS} -le-lib -lm -ffast-math
 
 # Convert ebinary to SREC file
 /usr/bin/epiphany-elf-objcopy --srec-forceS3 --output-target srec bin/e-task.elf bin/e-task.srec

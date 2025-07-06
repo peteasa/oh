@@ -32,7 +32,7 @@ typedef enum {
     // EGROUP_MMR / EGROUP_MESH
     ELINK_MAILBOXLO  = 0xF0730,
     ELINK_MAILBOXHI  = 0xF0734,
-    ELINK_MAILBOXSTAT= 0xF0738, // not in Epiphany system registers list
+    ELINK_MAILBOXSTAT= 0xF0738, // not in "New Epiphany system registers" list
 
     // EGROUP_MMR / EGROUP_RX block
     ELINK_RXDELAY0   = 0xF0310, // ERX_IDELAY0
@@ -61,6 +61,8 @@ typedef enum {
     ELINK_TXCFG_ADDR      = ELINK_BASE + ELINK_TXCFG,
     ELINK_TXSTATUS_ADDR   = ELINK_BASE + ELINK_TXSTATUS,
     ELINK_TXGPIO_ADDR     = ELINK_BASE + ELINK_TXGPIO,
+    ELINK_TXMONITOR_ADDR  = ELINK_BASE + ELINK_TXMONITOR,
+    ELINK_TXPACKET_ADDR   = ELINK_BASE + ELINK_TXPACKET,
     ELINK_TXMMU_ADDR      = ELINK_BASE + ELINK_TXMMU,
     //RX
     ELINK_RXCFG_ADDR      = ELINK_BASE + ELINK_RXCFG,
@@ -81,7 +83,7 @@ typedef enum {
 // documented in Epiphany datasheet
 // parallella sets Epiphany at position row=32=0x20 col=8=0x08 (32,8) -> (35,11) ie 0x808 -> 0x8CB
 #define COREID_SHIFT 20
-#define ADDR_TO_COREID(_addr) ((_addr) >> COREID_SHIFT)
+#define ADDR_TO_COREID(_addr) (( (_addr) >> COREID_SHIFT ) & 0xFFF)
 #define COREID_TO_ADDR(_coreid) ((_coreid) << COREID_SHIFT)
 #define COORDS_TO_COREID(_row, _col) (((_row) << 6) | (_col))
 #define COREID_TO_ROW(_coreid) ((_coreid) >> 6)
