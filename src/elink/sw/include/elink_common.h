@@ -4,7 +4,7 @@
 // coreid and coreid address from (row, col)
 // From e-meshdump.c and epiphany.c
 #define COREID_SHIFT 20
-#define ADDR_TO_COREID(_addr) ((_addr) >> COREID_SHIFT)
+#define ADDR_TO_COREID(_addr) (( (_addr) >> COREID_SHIFT ) & 0xFFF)
 #define COREID_TO_ADDR(_coreid) ((_coreid) << COREID_SHIFT)
 #define COORDS_TO_COREID(_row, _col) (((_row) << 6) | (_col))
 #define COREID_TO_ROW(_coreid) ((_coreid) >> 6)
@@ -47,30 +47,6 @@ typedef enum {
     ELINK_TXMMU      = 0xE0000,
     ELINK_RXMMU      = 0xE8000,
 } e_elink_regs_t;
-
-// depreciated - remove when all the code has been updated
-typedef enum {
-    E_SYS_RESET       = ELINK_RESET,
-    E_SYS_CLKCFG      = ELINK_CLK,
-    E_SYS_CHIPID      = ELINK_CHIPID,
-    E_SYS_VERSION     = ELINK_VERSION,
-    E_SYS_TXCFG       = ELINK_TXCFG,
-    E_SYS_TXSTATUS    = ELINK_TXSTATUS,
-    E_SYS_TXMONITOR   = ELINK_TXMONITOR,
-    E_SYS_TXPACKET    = ELINK_TXPACKET,
-    E_SYS_RXCFG       = ELINK_RXCFG,
-    E_SYS_RXSTATUS    = ELINK_RXSTATUS,
-    E_SYS_RXDELAY0    = ELINK_RXDELAY0,
-    E_SYS_RXDELAY1    = ELINK_RXDELAY1,
-
-    // TODO
-    E_SYS_RXDMACFG    = 0xF0500, // Same numbering as in Epiphany (E_REG_DMA0CONFIG)
-    E_SYS_RXDMASTATUS = 0xF051C, // Same numbering as in Epiphany (E_REG_DMA0STATUS)
-
-    E_SYS_MAILBOXLO   = ELINK_MAILBOXLO,
-    E_SYS_MAILBOXHI   = ELINK_MAILBOXHI,
-    E_SYS_MAILBOXSTAT = ELINK_MAILBOXSTAT,
-} e_sys_reg_id_t;
 
 // Core registers documented in epiphany architecture document
 typedef enum {
@@ -170,7 +146,8 @@ typedef union __attribute__((packed)) {
 } elink_dmacfg_t;
 
 #define EPIPHANY_DEV         "/dev/epiphany/mesh0"
-#define ESYS_REGS_BASE       ELINK_BASE
-#define EPIPHANY_BASE        0x80800000UL
+#define ESYS_REGS_BASE       (ELINK_BASE)
+#define EPIPHANY_BASE        (0x80800000UL)
+#define EMEM_BASE_ADDRESS    (0x8E000000UL)
 
 #endif
