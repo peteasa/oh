@@ -1,0 +1,22 @@
+// test comment and simple mesh accesses (leading space not allowed!)
+DEADBEEF_00001001_810f0210_05_0000 // write to elink CONFIG-LOOPBACK
+DEADBEEF_DEADBEEF_810f0210_04_0000 // read elink CONFIG-LOOPBACK
+00000000_DEADBEEF_8e005000_05_0010 // WRITE to shared memory
+        00000000_00000010_8e005000_05_0010 // WRITE to shared memory (with leading spaces)
+//cmd_time_cmd
+810d0000_DEADBEEF_8e005000_04_0000 // read shared memory
+00000000_00000100_80805000_05_0010 // WRITE to ecore local memory
+810d0000_DEADBEEF_80805000_04_0000 // read ecore local memory
+810d0000_DEADBEEF_808f0400_04_0000 // read ecore register before write
+00000000_00000001_808f0400_05_0010 // WRITE truncate rounding in ecore register
+810d0000_DEADBEEF_808f0400_04_0000 // read ecore register after write
+00000000_000003e0_810Ec700_05_0000 // Writing to RXMMU entry "8E0" lower
+00000000_00000000_810Ec704_05_0000 // Writing to RXMMU entry "8E0" upper
+00000000_00000810_810Ec080_05_0000 // Writing to RXMMU entry "810" lower
+00000000_00000000_810Ec084_05_0000 // Writing to RXMMU entry "810" upper
+// test commands the following all add more use of epiphany kernel driver
+//cmd_e_init parameters ignored
+//cmd_reset_system parameters ignored
+//cmd_e_open 0x0 0x0 0x1 0x1
+//cmd_e_load_group e_access_task.elf 0 0 1 1 0
+//cmd_e_start_group

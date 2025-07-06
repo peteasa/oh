@@ -1,0 +1,3 @@
+00000000_00000150_810f0210_05 // Set EAST routing ctrlmode in FPGA
+00000000_00000001_88bf0300_05 // Set EAST Epiphany link to half speed
+00000000_00000000_810f0210_05 // Clear ctrlmode in FPGA

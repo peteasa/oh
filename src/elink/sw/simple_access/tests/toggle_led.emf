@@ -1,0 +1,8 @@
+00000000_00000150_810f0210_05 // Set EAST routing ctrlmode in FPGA
+00000000_00000001_88bf0300_05 // Set EAST Epiphany link to half speed
+00000000_00000000_810f0210_05 // Clear ctrlmode in FPGA
+00000000_00000110_810f0210_05 // Set NORTH routing ctrlmode in FPGA
+00000000_03FFFFFF_80AF030C_05 // Write to North IO config register
+00000000_00000001_80AF0318_05 // Write to North IO data register
+00000000_00000000_810f0210_05 // Set back config register
+
