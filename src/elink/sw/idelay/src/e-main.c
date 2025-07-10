@@ -326,7 +326,7 @@ int my_reset_system(void)
 	//txcfg.ctrlmode_select = 0x0; /* */
 	usleep(1000);
 	if (sizeof(int) != ee_write_esys(ELINK_TXCFG, txcfg.reg)) {
-		printf ("my_reset_system(): E_REG_TXCFG failed"); fflush(stdout);
+		printf ("my_reset_system(): ELINK_TXCFG failed"); fflush(stdout);
 		goto cleanup_platform;
 	}
 
