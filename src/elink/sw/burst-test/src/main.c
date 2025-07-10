@@ -16,6 +16,7 @@
 #include <stdbool.h>
 
 #include <e-hal.h>
+#include <e-loader.h>  // for e_load_group
 
 #include "common.h"
 
