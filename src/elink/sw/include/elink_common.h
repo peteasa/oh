@@ -72,6 +72,8 @@ typedef enum {
 //    E_REG_MESHCONFIG = 0xF0700,
 
 //    E_REG_COREID     = 0xF0704,
+
+//    E_REG_RESETCORE  = 0xF070C,
 //} e_core_reg_id_t;
 
 // Following bits for ELINK_RESET are defined in elink_cfg.v
